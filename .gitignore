@@ -14,7 +14,6 @@ vendor/
 # Go workspace file
 go.work
 
-
 # IDE/editor specific files
 .vscode/
 .idea/
@@ -28,3 +27,5 @@ fiber.lock
 
 # env file
 .env
+
+.tmp/
