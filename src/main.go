@@ -5,9 +5,8 @@ import (
 	"src/internals/config"
 	"src/internals/core"
 	"src/internals/database"
+	"src/internals/routes"
 	"time"
-
-	// "github.com/gofiber/contrib/websocket"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
@@ -31,8 +30,10 @@ func main() {
 	server.Concurrency = 256 * 1024
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:5173",
-		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowOrigins:     "http://localhost:5173, http://localhost:5174", // Your frontend origin
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS", // Allow necessary methods
+		AllowCredentials: true,                              // Enable if using cookies or session data
 	}))
 
 	app.Use(helmet.New())
@@ -50,6 +51,8 @@ func main() {
 		Expiration:        30 * time.Second,
 		LimiterMiddleware: limiter.SlidingWindow{},
 	}))
+
+	routes.SetupRoutes(app)
 
 	app.Get("/metrics", monitor.New(monitor.Config{
 		Title: "NexusMeet metrics page",

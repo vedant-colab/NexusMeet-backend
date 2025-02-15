@@ -88,7 +88,7 @@ func Signin(c *fiber.Ctx) error {
 		log.Fatal(err)
 	}
 	// keyString := hex.EncodeToString(key)
-	encryptedUser, err := utils.Encrypt(signin.Name, key)
+	encryptedUser, err := utils.Encrypt(signin.Name)
 	if err != nil {
 		return fmt.Errorf("error in encrypting %v", err)
 	}
@@ -140,13 +140,16 @@ func Logout(c *fiber.Ctx) error {
 			"message":    "Invalid token",
 		})
 	}
+	fmt.Println(claims)
 	encryptedUsername := claims["username"].(string)
+	fmt.Println(encryptedUsername)
 	key := make([]byte, 32)
 	_, err = rand.Read(key)
 	if err != nil {
 		log.Fatal(err)
 	}
-	decryptedUsername, err := utils.Decrypt(encryptedUsername, string(key))
+	decryptedUsername, err := utils.Decrypt(encryptedUsername)
+	fmt.Println("decrypted", decryptedUsername)
 	if err != nil {
 		return fmt.Errorf("error in decrypting %v", err)
 	}
@@ -162,6 +165,21 @@ func Logout(c *fiber.Ctx) error {
 		"message":    "User logged out successfully",
 	})
 
+}
+
+func GetUsers(c *fiber.Ctx) error {
+	users, err := database.GetUsers()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":   "1",
+			"message": "Cannot get users: " + err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"error": "0",
+		"data":  users,
+	})
 }
 
 func Load(c *fiber.Ctx) error {

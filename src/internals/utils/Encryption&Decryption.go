@@ -5,14 +5,37 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
+	"errors"
 	"io"
+	"os"
 )
 
-func Encrypt(data string, key []byte) (string, error) {
-	block, err := aes.NewCipher([]byte(key))
+func getEncryptionKey() ([]byte, error) {
+	encodedKey := os.Getenv("ENCRYPT_KEY")
+	if encodedKey == "" {
+		return nil, errors.New("encryption key not set")
+	}
+
+	key, err := base64.URLEncoding.DecodeString(encodedKey)
 	if err != nil {
-		fmt.Println("error hit ", err)
+		return nil, errors.New("failed to decode encryption key")
+	}
+
+	if len(key) != 16 && len(key) != 24 && len(key) != 32 {
+		return nil, errors.New("invalid encryption key length: must be 16, 24, or 32 bytes")
+	}
+
+	return key, nil
+}
+
+func Encrypt(data string) (string, error) {
+	key, err := getEncryptionKey()
+	if err != nil {
+		return "", err
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
 		return "", err
 	}
 
@@ -26,15 +49,28 @@ func Encrypt(data string, key []byte) (string, error) {
 
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
-	fmt.Println(base64.URLEncoding.EncodeToString(ciphertext))
+
 	return base64.URLEncoding.EncodeToString(ciphertext), nil
 }
 
-func Decrypt(cryptoText, key string) (string, error) {
-	ciphertext, _ := base64.URLEncoding.DecodeString(cryptoText)
-	block, err := aes.NewCipher([]byte(key))
+func Decrypt(cryptoText string) (string, error) {
+	key, err := getEncryptionKey()
 	if err != nil {
 		return "", err
+	}
+
+	ciphertext, err := base64.URLEncoding.DecodeString(cryptoText)
+	if err != nil {
+		return "", err
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	if len(ciphertext) < aes.BlockSize {
+		return "", errors.New("ciphertext too short")
 	}
 
 	iv := ciphertext[:aes.BlockSize]

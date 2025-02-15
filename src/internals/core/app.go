@@ -1,13 +1,14 @@
 package core
 
 import (
-	"src/internals/routes"
+	"runtime"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func SetupApp() *fiber.App {
+	runtime.GOMAXPROCS(4)
 	app := fiber.New(fiber.Config{
 		Prefork:               false,
 		ServerHeader:          "Fiber/HighPerf",
@@ -16,11 +17,8 @@ func SetupApp() *fiber.App {
 		IdleTimeout:           15 * time.Second,
 		ReadBufferSize:        8192,
 		WriteBufferSize:       8192,
-		DisableStartupMessage: true,
+		DisableStartupMessage: false,
 	})
-
-	// Setup routes
-	routes.SetupRoutes(app)
 
 	return app
 }
