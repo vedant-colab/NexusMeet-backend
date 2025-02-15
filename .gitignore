@@ -27,3 +27,5 @@ fiber.lock
 
 # env file
 .env
+
+.tmp/

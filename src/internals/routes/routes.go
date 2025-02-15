@@ -15,4 +15,6 @@ func SetupRoutes(app *fiber.App) {
 
 	users := v1.Group("/users")
 	users.Post("/signup", controllers.Signup)
+	users.Post("/signin", controllers.Signin)
+	users.Get("/heavy1", controllers.Load)
 }
